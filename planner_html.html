@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mon Planificateur</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f0;color:#1a1a1a;min-height:100vh}
+  .app{max-width:600px;margin:0 auto;padding:1rem}
+  .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+  .header-center{text-align:center}
+  .week-title{font-weight:600;font-size:16px}
+  .week-sub{font-size:11px;color:#888;margin-top:2px}
+  .nav-btn{border:1px solid #ddd;border-radius:8px;padding:6px 14px;background:#fff;cursor:pointer;font-size:14px}
+  .nav-btn:hover{background:#f0f0f0}
+  .dup-bar{background:#fff;border-radius:8px;padding:8px 12px;margin-bottom:1rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border:1px solid #eee}
+  .dup-bar span{font-size:12px;color:#888;flex:1;min-width:120px}
+  .dup-bar input[type=date]{font-size:12px;padding:3px 6px;border:1px solid #ddd;border-radius:6px}
+  .btn{padding:5px 12px;border-radius:7px;font-size:12px;cursor:pointer;border:1px solid #ddd;background:#fff}
+  .btn-primary{background:#185FA5;color:#fff;border:none;font-weight:500}
+  .btn-success{background:#0F6E56;color:#fff;border:none;font-weight:500}
+  .btn-sm{padding:3px 8px;font-size:11px}
+  .objectives{background:#fff;border-radius:10px;padding:12px 14px;margin-bottom:1rem;border:1px solid #eee}
+  .objectives h3{font-size:12px;color:#888;font-weight:500;margin-bottom:8px}
+  .obj-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .obj-num{width:18px;height:18px;border-radius:50%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#666;flex-shrink:0}
+  .obj-row input{flex:1;border:none;outline:none;font-size:13px;background:transparent}
+  .day-tabs{display:flex;gap:4px;margin-bottom:1rem;overflow-x:auto}
+  .day-tab{flex:1 0 auto;padding:5px 3px;border:1px solid #ddd;border-radius:7px;background:transparent;cursor:pointer;font-size:12px;text-align:center;color:#888}
+  .day-tab.active{background:#fff;border-color:#333;color:#1a1a1a;font-weight:600}
+  .day-tab .tab-prog{font-size:10px;color:#0F6E56}
+  .day-card{background:#fff;border:1px solid #eee;border-radius:10px;padding:1rem;margin-bottom:1rem}
+  .day-name{font-weight:600;font-size:15px;margin-bottom:12px}
+  .block{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px 10px;border-radius:8px;transition:opacity 0.15s}
+  .block.done{opacity:0.6}
+  .block input[type=checkbox]{width:15px;height:15px;cursor:pointer;flex-shrink:0}
+  .block-info{flex:1}
+  .block-label{font-size:13px;font-weight:500}
+  .block.done .block-label{text-decoration:line-through}
+  .block-meta{font-size:11px;opacity:0.8;margin-top:2px}
+  .badge{border-radius:4px;padding:1px 5px;font-size:10px;color:#fff;margin-left:4px}
+  .block-actions button{background:none;border:none;cursor:pointer;font-size:13px;color:#aaa;padding:2px 4px}
+  .block-actions button:hover{color:#555}
+  .add-btn{width:100%;padding:7px;border-radius:8px;border:1px dashed #ccc;background:transparent;font-size:13px;color:#aaa;cursor:pointer;margin-top:4px}
+  .add-btn:hover{background:#f9f9f9}
+  .form-box{border:1px solid #ddd;border-radius:8px;padding:12px;margin-top:8px}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+  .form-group label{font-size:11px;color:#888;display:block;margin-bottom:4px}
+  .form-group input[type=time],.form-group input[type=text]{width:100%;border:1px solid #ddd;border-radius:6px;padding:5px 8px;font-size:13px}
+  .cats{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+  .cat-btn{padding:3px 9px;border-radius:6px;font-size:11px;cursor:pointer;border:1px solid #ddd;background:transparent;color:#888}
+  .cat-btn.active{font-weight:600;border-width:1.5px}
+  .form-actions{display:flex;gap:8px;margin-top:10px}
+  .note-section{margin-top:12px;padding-top:10px;border-top:1px solid #eee}
+  .note-section label{font-size:11px;color:#888;display:block;margin-bottom:4px}
+  .note-section textarea{width:100%;font-size:13px;border:none;outline:none;resize:vertical;line-height:1.6;background:transparent;font-family:inherit}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:0.5rem}
+  .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#888}
+  .legend-dot{width:10px;height:10px;border-radius:2px}
+  .empty{font-size:13px;color:#aaa;margin-bottom:12px}
+  .status{font-size:10px;margin-top:2px}
+  .status.saved{color:#0F6E56}
+  .status.saving{color:#BA7517}
+  @media(max-width:400px){.app{padding:0.5rem}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <button class="nav-btn" onclick="changeWeek(-1)">← Préc.</button>
+    <div class="header-center">
+      <div class="week-title" id="week-title"></div>
+      <div class="week-sub" id="week-sub"></div>
+      <div class="status" id="save-status"></div>
+    </div>
+    <button class="nav-btn" onclick="changeWeek(1)">Suiv. →</button>
+  </div>
+
+  <div class="dup-bar">
+    <span>Dupliquer jusqu'au :</span>
+    <input type="date" id="dup-until" value="2026-08-01">
+    <button class="btn" id="dup-btn" onclick="startDup()">Dupliquer →</button>
+    <span id="dup-msg" style="color:#0F6E56;font-weight:500;display:none"></span>
+  </div>
+
+  <div class="objectives">
+    <h3>Objectifs de la semaine</h3>
+    <div class="obj-row"><div class="obj-num">1</div><input id="obj0" placeholder="Objectif 1…" oninput="saveObj()"></div>
+    <div class="obj-row"><div class="obj-num">2</div><input id="obj1" placeholder="Objectif 2…" oninput="saveObj()"></div>
+    <div class="obj-row"><div class="obj-num">3</div><input id="obj2" placeholder="Objectif 3…" oninput="saveObj()"></div>
+  </div>
+
+  <div class="day-tabs" id="day-tabs"></div>
+  <div class="day-card">
+    <div class="day-name" id="day-name"></div>
+    <div id="blocks-list"></div>
+    <button class="add-btn" onclick="showForm()">+ Ajouter un bloc</button>
+    <div id="block-form" style="display:none">
+      <div class="form-box">
+        <div class="form-row">
+          <div class="form-group"><label>Début</label><input type="time" id="f-start" value="08:00"></div>
+          <div class="form-group"><label>Fin</label><input type="time" id="f-end" value="10:00"></div>
+        </div>
+        <div class="form-group"><label>Description</label><input type="text" id="f-label" placeholder="Ex. Révision MAD…"></div>
+        <div style="margin-top:8px"><label style="font-size:11px;color:#888">Catégorie</label>
+          <div class="cats" id="cat-btns"></div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" style="flex:1" onclick="saveBlock()">Ajouter</button>
+          <button class="btn" onclick="hideForm()">Annuler</button>
+        </div>
+      </div>
+    </div>
+    <div class="note-section">
+      <label>Notes du jour</label>
+      <textarea id="day-note" rows="2" placeholder="Remarques, priorités, humeur…" oninput="saveNote()"></textarea>
+    </div>
+  </div>
+
+  <div class="legend" id="legend"></div>
+</div>
+
+<script>
+const FULL_DAYS = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
+const SHORT_DAYS = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+const CATS = [
+  {key:"etudes",  label:"Études",         color:"#185FA5", bg:"#E6F1FB", text:"#0C447C"},
+  {key:"sport",   label:"Sport & Travail", color:"#0F6E56", bg:"#E1F5EE", text:"#085041"},
+  {key:"repos",   label:"Repos",           color:"#854F0B", bg:"#FAEEDA", text:"#633806"},
+  {key:"autre",   label:"Autre",           color:"#533AB7", bg:"#EEEDFE", text:"#3C3489"},
+];
+
+const TEMPLATE = {
+  Lundi:[
+    {start:"07:00",end:"07:30",label:"Déjeuner",cat:"repos"},
+    {start:"08:00",end:"09:00",label:"Chimie",cat:"etudes"},
+    {start:"08:00",end:"10:00",label:"Meal",cat:"repos"},
+    {start:"09:05",end:"10:00",label:"Révision chimie",cat:"etudes"},
+    {start:"10:00",end:"10:30",label:"Collation",cat:"repos"},
+    {start:"10:40",end:"12:00",label:"Révision biologie",cat:"etudes"},
+    {start:"12:00",end:"13:00",label:"Diner",cat:"repos"},
+    {start:"13:05",end:"14:00",label:"Révision biologie",cat:"etudes"},
+    {start:"14:00",end:"16:00",label:"Travail de maturité",cat:"etudes"},
+    {start:"16:00",end:"16:30",label:"Collation",cat:"repos"},
+    {start:"16:40",end:"18:00",label:"Travail de maturité",cat:"etudes"},
+    {start:"18:30",end:"20:00",label:"Séance cardio",cat:"sport"},
+    {start:"22:30",end:"00:00",label:"Sleep",cat:"repos"},
+  ],
+  Mardi:[
+    {start:"07:00",end:"07:30",label:"Déjeuner",cat:"repos"},
+    {start:"08:00",end:"09:55",label:"Psychologie",cat:"etudes"},
+    {start:"10:00",end:"11:00",label:"Maths",cat:"etudes"},
+    {start:"11:15",end:"12:15",label:"Chimie",cat:"etudes"},
+    {start:"12:20",end:"13:00",label:"Diner",cat:"repos"},
+    {start:"13:00",end:"14:00",label:"Psychologie",cat:"etudes"},
+    {start:"14:05",end:"15:00",label:"Balade publibike",cat:"repos"},
+    {start:"15:05",end:"18:00",label:"Psychologie",cat:"etudes"},
+    {start:"18:30",end:"20:00",label:"Séance Jambe",cat:"sport"},
+    {start:"20:30",end:"21:00",label:"Meal",cat:"repos"},
+    {start:"22:30",end:"00:00",label:"Sleep",cat:"repos"},
+  ],
+  Mercredi:[
+    {start:"07:00",end:"07:30",label:"Déjeuner",cat:"repos"},
+    {start:"08:00",end:"09:00",label:"Espagnol",cat:"etudes"},
+    {start:"09:05",end:"12:00",label:"Espagnol révision",cat:"etudes"},
+    {start:"12:00",end:"13:00",label:"Diner",cat:"repos"},
+    {start:"13:00",end:"18:00",label:"Français révision",cat:"etudes"},
+    {start:"18:30",end:"20:00",label:"Séance haut du corps",cat:"sport"},
+    {start:"20:30",end:"21:00",label:"Meal",cat:"repos"},
+    {start:"21:05",end:"22:30",label:"Lire Maupassant",cat:"etudes"},
+    {start:"22:30",end:"00:00",label:"Sleep",cat:"repos"},
+  ],
+  Jeudi:[
+    {start:"07:00",end:"07:30",label:"Déjeuner",cat:"repos"},
+    {start:"10:30",end:"11:30",label:"Ilona coaching",cat:"sport"},
+    {start:"12:05",end:"13:00",label:"Diner",cat:"repos"},
+    {start:"13:00",end:"14:00",label:"Français",cat:"etudes"},
+    {start:"14:00",end:"16:00",label:"Allemand",cat:"etudes"},
+    {start:"16:00",end:"17:00",label:"Balade / Meal",cat:"repos"},
+    {start:"18:00",end:"19:00",label:"Courir / intervalles",cat:"sport"},
+    {start:"20:30",end:"21:00",label:"Meal",cat:"repos"},
+    {start:"22:30",end:"00:00",label:"Sleep",cat:"repos"},
+  ],
+  Vendredi:[
+    {start:"07:00",end:"07:30",label:"Déjeuner",cat:"repos"},
+    {start:"08:00",end:"10:00",label:"Séance Jambe",cat:"sport"},
+    {start:"10:30",end:"12:00",label:"Meal prep",cat:"autre"},
+    {start:"12:00",end:"13:00",label:"Diner",cat:"repos"},
+    {start:"13:00",end:"16:00",label:"Allemand révision",cat:"etudes"},
+    {start:"16:05",end:"17:00",label:"Collation",cat:"repos"},
+    {start:"17:00",end:"20:00",label:"Allemand révision",cat:"etudes"},
+    {start:"20:30",end:"21:00",label:"Diner",cat:"repos"},
+    {start:"21:05",end:"22:30",label:"Lire Rousseau",cat:"etudes"},
+    {start:"22:30",end:"00:00",label:"Sleep",cat:"repos"},
+  ],
+  Samedi:[
+    {start:"07:00",end:"07:30",label:"Déjeuner",cat:"repos"},
+    {start:"08:00",end:"09:00",label:"Étirement",cat:"sport"},
+    {start:"10:00",end:"12:00",label:"Maths",cat:"etudes"},
+    {start:"12:00",end:"13:00",label:"Diner",cat:"repos"},
+    {start:"13:05",end:"15:00",label:"Maths",cat:"etudes"},
+    {start:"16:00",end:"19:00",label:"Biologie",cat:"etudes"},
+    {start:"20:30",end:"21:00",label:"Meal",cat:"repos"},
+    {start:"21:05",end:"22:25",label:"Lire Rousseau",cat:"etudes"},
+    {start:"22:30",end:"00:00",label:"Sleep",cat:"repos"},
+  ],
+  Dimanche:[
+    {start:"07:00",end:"07:30",label:"Déjeuner",cat:"repos"},
+    {start:"08:00",end:"10:00",label:"Course / longue sortie",cat:"sport"},
+    {start:"10:05",end:"11:00",label:"Étirement / Abdos",cat:"sport"},
+    {start:"11:00",end:"16:00",label:"Free",cat:"autre"},
+    {start:"12:00",end:"13:00",label:"Diner",cat:"repos"},
+    {start:"17:00",end:"20:00",label:"Meal prep",cat:"autre"},
+    {start:"20:30",end:"21:00",label:"Meal",cat:"repos"},
+    {start:"21:00",end:"22:30",label:"Lire Baudelaire",cat:"etudes"},
+    {start:"22:30",end:"00:00",label:"Sleep",cat:"repos"},
+  ],
+};
+
+let weekOffset = 0;
+let activeDay = 0;
+let editIdx = null;
+let selCat = "etudes";
+let allData = {};
+
+function getMonday(offset) {
+  const now = new Date();
+  const dow = now.getDay()===0?6:now.getDay()-1;
+  const m = new Date(now);
+  m.setDate(now.getDate()-dow+offset*7);
+  m.setHours(0,0,0,0);
+  return m;
+}
+function getWeekKey(offset){ return getMonday(offset).toISOString().slice(0,10); }
+function fmtRange(offset){
+  const m=getMonday(offset), s=new Date(m); s.setDate(m.getDate()+6);
+  const f=d=>d.toLocaleDateString("fr-CH",{day:"numeric",month:"short"});
+  return `${f(m)} – ${f(s)}`;
+}
+function makeWeek(){
+  return {
+    objectives:["","",""],
+    days:Object.fromEntries(FULL_DAYS.map(d=>[d,{
+      blocks:(TEMPLATE[d]||[]).map(b=>({...b,done:false})),
+      note:""
+    }]))
+  };
+}
+function loadAll(){ try{ return JSON.parse(localStorage.getItem("planner_all"))||{}; }catch{ return {}; } }
+function saveAll(){ localStorage.setItem("planner_all", JSON.stringify(allData)); showSaved(); }
+function showSaved(){ const el=document.getElementById("save-status"); el.textContent="✓ Sauvegardé"; el.className="status saved"; setTimeout(()=>el.textContent="",2000); }
+
+function getWeek(offset){
+  const k=getWeekKey(offset);
+  if(!allData[k]) allData[k]=makeWeek();
+  return allData[k];
+}
+
+function seedWeeks(){
+  const start=new Date("2026-04-20"), end=new Date("2026-08-01");
+  let cur=new Date(start);
+  while(cur<=end){
+    const k=cur.toISOString().slice(0,10);
+    if(!allData[k]) allData[k]=makeWeek();
+    cur.setDate(cur.getDate()+7);
+  }
+  saveAll();
+}
+
+function catOf(k){ return CATS.find(c=>c.key===k)||CATS[2]; }
+
+function renderTabs(){
+  const tabs=document.getElementById("day-tabs");
+  tabs.innerHTML="";
+  const w=getWeek(weekOffset);
+  FULL_DAYS.forEach((d,i)=>{
+    const blocks=w.days[d]?.blocks||[];
+    const total=blocks.length, done=blocks.filter(b=>b.done).length;
+    const btn=document.createElement("button");
+    btn.className="day-tab"+(i===activeDay?" active":"");
+    btn.innerHTML=`<div>${SHORT_DAYS[i]}</div>${total>0?`<div class="tab-prog">${done}/${total}</div>`:""}`;
+    btn.onclick=()=>{ activeDay=i; render(); };
+    tabs.appendChild(btn);
+  });
+}
+
+function renderBlocks(){
+  const w=getWeek(weekOffset);
+  const day=FULL_DAYS[activeDay];
+  const blocks=w.days[day]?.blocks||[];
+  const list=document.getElementById("blocks-list");
+  list.innerHTML="";
+  if(blocks.length===0){ list.innerHTML='<div class="empty">Aucun bloc pour ce jour.</div>'; }
+  blocks.forEach((b,idx)=>{
+    const cat=catOf(b.cat);
+    const div=document.createElement("div");
+    div.className="block"+(b.done?" done":"");
+    div.style.background=b.done?"#f5f5f0":cat.bg;
+    div.innerHTML=`
+      <input type="checkbox" ${b.done?"checked":""} onchange="toggleDone('${day}',${idx})">
+      <div class="block-info">
+        <div class="block-label" style="color:${cat.text}">${b.label}</div>
+        <div class="block-meta" style="color:${cat.text}">${b.start} – ${b.end}<span class="badge" style="background:${cat.color}">${cat.label}</span></div>
+      </div>
+      <div class="block-actions">
+        <button onclick="editBlock('${day}',${idx})">✎</button>
+        <button onclick="delBlock('${day}',${idx})">✕</button>
+      </div>`;
+    list.appendChild(div);
+  });
+  document.getElementById("day-note").value=w.days[day]?.note||"";
+}
+
+function renderObjectives(){
+  const w=getWeek(weekOffset);
+  [0,1,2].forEach(i=>{ document.getElementById("obj"+i).value=w.objectives[i]||""; });
+}
+
+function renderHeader(){
+  document.getElementById("week-title").textContent="Semaine du "+fmtRange(weekOffset);
+  const w=getWeek(weekOffset);
+  const total=Object.values(w.days).reduce((s,d)=>s+d.blocks.length,0);
+  const done=Object.values(w.days).reduce((s,d)=>s+d.blocks.filter(b=>b.done).length,0);
+  document.getElementById("week-sub").textContent=`${done}/${total} tâches complétées`;
+  document.getElementById("day-name").textContent=FULL_DAYS[activeDay];
+}
+
+function renderLegend(){
+  const leg=document.getElementById("legend");
+  leg.innerHTML=CATS.map(c=>`<div class="legend-item"><div class="legend-dot" style="background:${c.color}"></div>${c.label}</div>`).join("");
+}
+
+function renderCatBtns(){
+  document.getElementById("cat-btns").innerHTML=CATS.map(c=>
+    `<button class="cat-btn${selCat===c.key?" active":""}" style="${selCat===c.key?`background:${c.bg};color:${c.text};border-color:${c.color}`:""}" onclick="selCatFn('${c.key}')">${c.label}</button>`
+  ).join("");
+}
+
+function selCatFn(k){ selCat=k; renderCatBtns(); }
+
+function render(){ renderHeader(); renderTabs(); renderBlocks(); renderObjectives(); }
+
+function changeWeek(d){ weekOffset+=d; activeDay=0; hideForm(); render(); }
+
+function toggleDone(day,idx){
+  const w=getWeek(weekOffset);
+  w.days[day].blocks[idx].done=!w.days[day].blocks[idx].done;
+  saveAll(); render();
+}
+function delBlock(day,idx){
+  const w=getWeek(weekOffset);
+  w.days[day].blocks.splice(idx,1);
+  saveAll(); render();
+}
+function editBlock(day,idx){
+  const b=getWeek(weekOffset).days[day].blocks[idx];
+  document.getElementById("f-start").value=b.start;
+  document.getElementById("f-end").value=b.end;
+  document.getElementById("f-label").value=b.label;
+  selCat=b.cat; editIdx=idx;
+  document.getElementById("block-form").style.display="block";
+  document.querySelector("#block-form .btn-primary").textContent="Modifier";
+  renderCatBtns();
+}
+function showForm(){ editIdx=null; selCat="etudes"; document.getElementById("f-label").value=""; document.getElementById("f-start").value="08:00"; document.getElementById("f-end").value="10:00"; document.getElementById("block-form").style.display="block"; document.querySelector("#block-form .btn-primary").textContent="Ajouter"; renderCatBtns(); }
+function hideForm(){ document.getElementById("block-form").style.display="none"; editIdx=null; }
+function saveBlock(){
+  const label=document.getElementById("f-label").value.trim();
+  if(!label) return;
+  const b={start:document.getElementById("f-start").value, end:document.getElementById("f-end").value, label, cat:selCat, done:false};
+  const w=getWeek(weekOffset); const day=FULL_DAYS[activeDay];
+  if(editIdx!==null) w.days[day].blocks[editIdx]={...b,done:w.days[day].blocks[editIdx].done};
+  else w.days[day].blocks.push(b);
+  w.days[day].blocks.sort((a,c)=>a.start.localeCompare(c.start));
+  saveAll(); hideForm(); render();
+}
+function saveObj(){
+  const w=getWeek(weekOffset);
+  [0,1,2].forEach(i=>w.objectives[i]=document.getElementById("obj"+i).value);
+  saveAll();
+}
+function saveNote(){
+  const w=getWeek(weekOffset);
+  w.days[FULL_DAYS[activeDay]].note=document.getElementById("day-note").value;
+  saveAll();
+}
+function startDup(){
+  const until=new Date(document.getElementById("dup-until").value); until.setHours(23,59,59,999);
+  const src=JSON.parse(JSON.stringify(getWeek(weekOffset)));
+  let off=weekOffset+1, count=0;
+  while(true){
+    const mon=getMonday(off); if(mon>until) break;
+    const k=mon.toISOString().slice(0,10);
+    const ex=allData[k]||makeWeek();
+    allData[k]={
+      objectives:ex.objectives,
+      days:Object.fromEntries(FULL_DAYS.map(d=>[d,{blocks:(src.days[d]?.blocks||[]).map(b=>({...b,done:false})),note:ex.days[d]?.note||""}]))
+    };
+    count++; off++;
+  }
+  saveAll();
+  const msg=document.getElementById("dup-msg");
+  msg.textContent=`✓ ${count} semaine${count>1?"s":""} copiée${count>1?"s":""}!`;
+  msg.style.display="inline";
+  setTimeout(()=>msg.style.display="none",3000);
+  render();
+}
+
+// Init
+allData = loadAll();
+seedWeeks();
+renderLegend();
+renderCatBtns();
+render();
+</script>
+</body>
+</html>
